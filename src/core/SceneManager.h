@@ -25,6 +25,7 @@ public:
         if (mSceneVec[mActiveScene]->isSceneActive())
         {
             mSceneVec[mActiveScene]->unloadScene();
+            mSceneVec[mActiveScene]->removeAllTouchables();
             mSceneVec[mActiveScene]->setSceneActive(false);
         }
 

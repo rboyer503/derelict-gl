@@ -6,10 +6,9 @@
 
 
 SpriteObject::SpriteObject(const SpriteFrameMapInfo *frameMapInfo, Vector3 pos, Vector2 size,
-                           DGLColor color)
-        : mFrameMapInfo(frameMapInfo),
-          mPos(pos),
-          mSize(size),
+                           DGLColor color, std::function< bool() > callback)
+        : ITouchable(pos, size, callback),
+          mFrameMapInfo(frameMapInfo),
           mColor(color) {
     mIndices = {0, 1, 2, 0, 2, 3};
     mNumVerts = 4;

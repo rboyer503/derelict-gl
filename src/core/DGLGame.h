@@ -58,9 +58,12 @@ protected:
 
     // Game state.
     bool mPaused = false;
+    bool mForcePaused = false;
     uint32_t mNextScene = 0;
     bool mSwitchScene = false;
     game_state_ptr mGameState;
+    bool mBackPressed = false;
+    bool mTerminate = false;
 
     // Graphics.
     int mScreenSizeX;
@@ -83,12 +86,13 @@ public:
                      const SpriteFrameMapInfo &fontFrameMapInfo);
     virtual ~DGLGame();
 
-    void onPause();
-    void onResume();
+    void onPause(bool force = false);
+    void onResume(bool force = false);
+    void onBackPressed();
     void onSurfaceCreated(std::vector<DGLRawBitmap> &bitmaps);
     void onSurfaceChanged(int widthInPixels, int heightInPixels);
     void onSurfaceDestroyed();
-    void onTick();
+    bool onTick();
     void onTouchInput(eInputEvent event, int x, int y);
     void onRotationInput(double azimuth, double pitch, double roll);
 
@@ -96,6 +100,10 @@ public:
     oboe::DataCallbackResult
     onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) override;
 
+    bool isPaused() const { return mPaused; }
+    bool isBackPressed() const { return mBackPressed; }
+    void backPressHandled() { mBackPressed = false; }
+    void triggerTerminate() { mTerminate = true; }
     DGLGameState &getGameState() { return *mGameState; }
     int getScreenSizeX() const { return mScreenSizeX; }
     int getScreenSizeY() const { return mScreenSizeY; }

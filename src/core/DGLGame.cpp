@@ -40,7 +40,9 @@ DGLGame::~DGLGame() {
     }
 }
 
-void DGLGame::onPause() {
+void DGLGame::onPause(bool force) {
+    if (force)
+        mForcePaused = true;
     mPaused = true;
 
     for (auto &sound : mSoundVec)
@@ -51,8 +53,10 @@ void DGLGame::onPause() {
         scene->pause();
 }
 
-void DGLGame::onResume() {
-    mPaused = false;
+void DGLGame::onResume(bool force) {
+    if (mForcePaused && !force)
+        return;
+    mPaused = mForcePaused = false;
 
     for (auto &sound : mSoundVec)
         sound->resume();
@@ -62,6 +66,16 @@ void DGLGame::onResume() {
     scene_ptr scene = (*mSceneManager).getActiveScene();
     if (scene)
         scene->resume();
+}
+
+void DGLGame::onBackPressed() {
+    if (mBackPressed)
+        return;
+    mBackPressed = true;
+
+    scene_ptr scene = (*mSceneManager).getActiveScene();
+    if (scene)
+        scene->backPressed();
 }
 
 void DGLGame::onSurfaceCreated(std::vector<DGLRawBitmap> &bitmaps) {
@@ -100,12 +114,15 @@ void DGLGame::onSurfaceDestroyed() {
     (*mTextManager).uninitialize();
 }
 
-void DGLGame::onTick() {
+bool DGLGame::onTick() {
+    if (mTerminate)
+        return true;
+
     if (mSwitchScene)
     {
         mSwitchScene = false;
         (*mSceneManager).setActiveScene(mNextScene);
-        return;
+        return false;
     }
 
     static int64_t tickCalls = 0;
@@ -114,7 +131,7 @@ void DGLGame::onTick() {
     // Do timing.
     int32_t deltaMs = static_cast<int32_t>(nowUptimeMillis() - mNextFrameMs);
     if (deltaMs < 0)
-        return;
+        return false;
 
     int32_t ticks = (deltaMs / mFrameDurMs) + 1;
     mNextFrameMs += mFrameDurMs * ticks;
@@ -130,7 +147,7 @@ void DGLGame::onTick() {
     if (mFlushTicks)
     {
         mFlushTicks = false;
-        return;
+        return false;
     }
 
     scene_ptr scene = (*mSceneManager).getActiveScene();
@@ -143,9 +160,12 @@ void DGLGame::onTick() {
         if (scene)
         {
             scene->tick();
-            scene->applyPhysics();
+            if (!mPaused)
+                scene->applyPhysics();
         }
-        queueSounds();
+
+        if (!mPaused)
+            queueSounds();
     }
 
     GraphicsIntf->ClearScreen();
@@ -167,6 +187,8 @@ void DGLGame::onTick() {
         GraphicsIntf->SetBlend(BLEND_MODE_NONE);
         GraphicsIntf->SetDepthTest(true);
     }
+
+    return false;
 }
 
 void DGLGame::onTouchInput(eInputEvent event, int x, int y) {
@@ -174,7 +196,10 @@ void DGLGame::onTouchInput(eInputEvent event, int x, int y) {
                 static_cast<float>(y - (mScreenSizeY / 2)) / (mScreenSizeY / 2));
     scene_ptr scene = (*mSceneManager).getActiveScene();
     if (scene)
-        scene->touchInput(event, pos);
+    {
+        if (!scene->applyTouchInput(event, pos))
+            scene->touchInput(event, pos);
+    }
 }
 
 void DGLGame::onRotationInput(double azimuth, double pitch, double roll) {
@@ -210,14 +235,12 @@ bool DGLGame::scheduleSound(int soundIndex, uint32_t ticksToStart) {
     return false;
 }
 
-void DGLGame::playSound(int soundIndex, bool looping)
-{
+void DGLGame::playSound(int soundIndex, bool looping) {
     mSoundVec[soundIndex]->setPlaying(true);
     mSoundVec[soundIndex]->setLooping(looping);
 }
 
-void DGLGame::stopSound(int soundIndex)
-{
+void DGLGame::stopSound(int soundIndex) {
     mSoundVec[soundIndex]->setPlaying(false);
 }
 

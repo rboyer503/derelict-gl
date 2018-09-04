@@ -11,6 +11,7 @@ set (dgl_sources
         src/data/Matrices.cpp
         src/data/ParticleDrawList.cpp
         src/graphics/OpenGLGraphics.cpp
+        src/input/ITouchable.cpp
         src/objects/GameObject.cpp
         src/objects/Particle.cpp
         src/objects/Sprite.cpp

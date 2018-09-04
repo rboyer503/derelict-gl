@@ -10,6 +10,7 @@
 #include "GameObject.h"
 #include "../data/Vectors.h"
 #include "../graphics/IGraphics.h"
+#include "../input/ITouchable.h"
 
 
 struct SpriteFrameMapInfo
@@ -20,17 +21,15 @@ struct SpriteFrameMapInfo
 };
 
 
-class SpriteObject : public GameObject
+class SpriteObject : public GameObject, public ITouchable
 {
     const SpriteFrameMapInfo *mFrameMapInfo;
     uint32_t mFrame = 0;
-    Vector3 mPos;
-    Vector2 mSize;
     DGLColor mColor;
 
 public:
     SpriteObject(const SpriteFrameMapInfo *frameMapInfo, Vector3 pos, Vector2 size,
-                 DGLColor mColor);
+                 DGLColor color, std::function< bool() > callback = nullptr);
 
     void handleDirty() override;
 
